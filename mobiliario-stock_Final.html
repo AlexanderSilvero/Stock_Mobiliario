@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobiliario Stock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #f7f5f1;
+    --surface: #ffffff;
+    --surface-2: #efece4;
+    --line: #ddd7c9;
+    --accent: #171512;
+    --accent-soft: #17151214;
+    --sage: #a9967c;
+    --text: #171512;
+    --text-dim: #8a8377;
+    --radius: 2px;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+  }
+
+  body{
+    background-color: var(--bg);
+    background-image:
+      linear-gradient(rgba(247,245,241,.88), rgba(247,245,241,.88)),
+      var(--user-bg, none);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.45;
+    min-height: 100vh;
+  }
+
+  body::before{
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: .035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    z-index: 0;
+  }
+
+  #app{
+    position: relative;
+    z-index: 1;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 32px 24px 64px;
+  }
+
+  header{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding-bottom: 24px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .brand{
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo-slot{
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .logo-slot img{
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  h1{
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin: 0;
+    color: var(--text);
+  }
+
+  .subtitle{
+    margin: 4px 0 0;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  .toolbar{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  button{
+    font-family: 'Inter', sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: .3px;
+    padding: 11px 18px;
+    border-radius: var(--radius);
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: #fdfcfa;
+    cursor: pointer;
+    transition: filter .15s ease, transform .1s ease;
+  }
+
+  button:hover{ filter: brightness(1.08); }
+  button:active{ transform: translateY(1px); }
+
+  button.ghost{
+    background: transparent;
+    color: var(--text);
+  }
+
+  button.ghost:hover{ background: var(--surface-2); }
+
+  button:focus-visible{
+    outline: 2px solid var(--sage);
+    outline-offset: 2px;
+  }
+
+  .empty{
+    text-align: center;
+    color: var(--text-dim);
+    padding: 60px 20px;
+    font-size: 15px;
+    display: none;
+  }
+
+  .grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 22px;
+    align-items: start;
+  }
+
+  .tag-card{
+    perspective: 1200px;
+  }
+
+  .tag-inner{
+    position: relative;
+    width: 100%;
+    transition: transform .5s cubic-bezier(.4,.2,.2,1);
+    transform-style: preserve-3d;
+    cursor: pointer;
+  }
+
+  .tag-card.flipped .tag-inner{
+    transform: rotateY(180deg);
+  }
+
+  .tag-face{
+    backface-visibility: hidden;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .tag-front{
+    position: relative;
+    min-height: 210px;
+  }
+
+  .tag-back{
+    position: absolute;
+    inset: 0;
+    transform: rotateY(180deg);
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 16px;
+    gap: 6px;
+    background: var(--surface-2);
+  }
+
+  .tag-hole{
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    z-index: 2;
+  }
+
+  .tag-front img{
+    width: 100%;
+    height: auto;
+    display: block;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .tag-front .no-img{
+    width: 100%;
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    font-size: 13px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface-2);
+  }
+
+  .tag-label{
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .qty-name{
+    font-size: 13px;
+    color: var(--text-dim);
+    padding: 0 8px;
+  }
+
+  .qty-display{
+    font-family: 'Montserrat', sans-serif;
+    font-size: 44px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    margin-top: 4px;
+  }
+
+  .qty-controls{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .qty-btn{
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .qty-input{
+    width: 56px;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 6px 4px;
+  }
+
+  .delete-btn{
+    margin-top: 12px;
+    background: transparent;
+    border-color: var(--line);
+    color: var(--text-dim);
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .delete-btn.armed{
+    background: #b3453a;
+    border-color: #b3453a;
+    color: #fff;
+  }
+
+  /* Modal */
+  .modal-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(15,13,11,.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 10;
+  }
+
+  .modal-overlay.hidden{ display: none; }
+
+  .modal{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 28px;
+    width: 100%;
+    max-width: 380px;
+  }
+
+  .modal h2{
+    font-family: 'Montserrat', sans-serif;
+    font-size: 18px;
+    margin: 0 0 18px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+
+  .modal label{
+    display: block;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+
+  .modal input[type="text"],
+  .modal input[type="number"]{
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    padding: 9px 10px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+  }
+
+  .modal input[type="file"]{
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  #imgPreview{
+    margin: 4px 0 14px;
+  }
+
+  #imgPreview img{
+    max-height: 110px;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+  }
+
+  .modal-actions{
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+
+  .hint{
+    font-size: 11.5px;
+    color: var(--text-dim);
+    margin-top: -8px;
+    margin-bottom: 14px;
+  }
+
+  footer{
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 12px;
+    margin-top: 40px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .tag-inner{ transition: none; }
+  }
+
+  @media (max-width: 640px){
+    #app{ padding: 24px 16px 48px; }
+
+    header{
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .toolbar{
+      width: 100%;
+    }
+
+    .toolbar button{
+      flex: 1;
+    }
+
+    h1{ font-size: 24px; }
+
+    .grid{
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 14px;
+    }
+
+    .tag-front{ min-height: 170px; }
+
+    .tag-front .no-img{ height: 110px; }
+
+    .qty-display{ font-size: 36px; }
+
+    .modal{ padding: 20px; }
+  }
+
+  @media (max-width: 360px){
+    .grid{
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    }
+  }
+</style>
+</head>
+<body>
+
+  <div id="app">
+    <header>
+      <div class="brand">
+        <div class="logo-slot" id="logoSlot">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#171512" stroke-width="1.6">
+            <path d="M3 7l9-4 9 4-9 4-9-4z"/>
+            <path d="M3 7v10l9 4 9-4V7"/>
+            <path d="M12 11v10"/>
+          </svg>
+        </div>
+        <div class="title-block">
+          <h1>Mobiliario Stock</h1>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button id="btnAdd">Agregar item</button>
+      </div>
+    </header>
+
+    <main class="grid" id="grid"></main>
+    <p class="empty" id="emptyState"></p>
+
+    <footer>Los datos quedan guardados para la próxima vez que abras esta página.</footer>
+  </div>
+
+  <!-- Modal: agregar mueble -->
+  <div class="modal-overlay hidden" id="modalAdd">
+    <div class="modal">
+      <h2>Agregar mueble</h2>
+      <label>Foto
+        <input type="file" id="inputImage" accept="image/*">
+      </label>
+      <div id="imgPreview"></div>
+      <label>Nombre
+        <input type="text" id="inputName" placeholder="Ej: Silla plegable">
+      </label>
+      <label>Cantidad
+        <input type="number" id="inputQty" min="0" value="1">
+      </label>
+      <div class="modal-actions">
+        <button class="ghost" id="cancelAdd">Cancelar</button>
+        <button id="confirmAdd">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: personalizar (deshabilitado, sin botón de acceso) -->
+
+<script>
+(function(){
+  const LEGACY_BLOB_KEY = 'moviliario_stock_v1';
+  const LEGACY_ITEM_PREFIX = 'item:';
+  const META_PREFIX = 'meta:';
+  const IMAGE_PREFIX = 'img:';
+  let state = { items: [] };
+  let pendingImage = null;
+
+  const grid = document.getElementById('grid');
+  const emptyState = document.getElementById('emptyState');
+
+  // ---------- storage ----------
+  // El nombre/cantidad de cada mueble (chico, cambia seguido) se guarda
+  // separado de su foto (pesada, casi no cambia). Así, sumar o restar
+  // solo reescribe el numerito y nunca vuelve a mandar la imagen.
+  async function loadState(){
+    try{
+      const metaList = await window.storage.list(META_PREFIX, false);
+      const metaKeys = (metaList && metaList.keys) || [];
+
+      if(metaKeys.length){
+        const items = [];
+        for(const key of metaKeys){
+          const id = key.slice(META_PREFIX.length);
+          let meta = { name: '', qty: 0 };
+          try{
+            const res = await window.storage.get(key, false);
+            if(res && res.value) meta = JSON.parse(res.value);
+          }catch(err){
+            // se salta un item con metadatos dañados
+          }
+          let image = null;
+          try{
+            const imgRes = await window.storage.get(IMAGE_PREFIX + id, false);
+            if(imgRes && imgRes.value) image = imgRes.value;
+          }catch(err){
+            // este item no tiene foto guardada
+          }
+          items.push({ id, name: meta.name || '', qty: meta.qty || 0, image });
+        }
+        items.sort((a, b) => a.id.localeCompare(b.id));
+        state.items = items;
+      }else{
+        await migrateOldItemFormat();
+      }
+    }catch(err){
+      console.error('Error al cargar el inventario:', err);
+    }
+    render();
+  }
+
+  // Migra del formato anterior (nombre + cantidad + foto en una sola clave)
+  async function migrateOldItemFormat(){
+    try{
+      const oldList = await window.storage.list(LEGACY_ITEM_PREFIX, false);
+      const oldKeys = (oldList && oldList.keys) || [];
+      if(oldKeys.length){
+        for(const key of oldKeys){
+          const id = key.slice(LEGACY_ITEM_PREFIX.length);
+          try{
+            const res = await window.storage.get(key, false);
+            if(!res || !res.value) continue;
+            const parsed = JSON.parse(res.value);
+            const item = { id, name: parsed.name || '', qty: parsed.qty || 0, image: parsed.image || null };
+            await persistMeta(item);
+            if(item.image) await persistImage(item);
+            state.items.push(item);
+          }catch(err){
+            continue;
+          }
+        }
+        return;
+      }
+    }catch(err){
+      // no había datos en el formato "item:", se sigue con el más viejo
+    }
+    await migrateLegacyBlob();
+  }
+
+  // Migra del formato más viejo (todo el inventario en un solo bloque)
+  async function migrateLegacyBlob(){
+    try{
+      const legacy = await window.storage.get(LEGACY_BLOB_KEY, false);
+      if(!legacy || !legacy.value) return;
+      const parsed = JSON.parse(legacy.value);
+      const legacyItems = (parsed && parsed.items) || [];
+      for(const raw of legacyItems){
+        const item = {
+          id: raw.id || generateId(),
+          name: raw.name || '',
+          qty: raw.qty || 0,
+          image: raw.image || null
+        };
+        await persistMeta(item);
+        if(item.image) await persistImage(item);
+        state.items.push(item);
+      }
+    }catch(err){
+      // no había datos de ningún formato anterior, se arranca vacío
+    }
+  }
+
+  function wait(ms){
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // Reintenta una escritura/borrado ante errores pasajeros del servidor
+  // (como el "Internal server error" que a veces devuelve el storage)
+  // antes de darla por perdida.
+  async function withRetry(fn, attempts = 3){
+    let lastErr;
+    for(let i = 0; i < attempts; i++){
+      try{
+        return await fn();
+      }catch(err){
+        lastErr = err;
+        if(i < attempts - 1) await wait(400 * (i + 1));
+      }
+    }
+    throw lastErr;
+  }
+
+  async function persistMeta(item){
+    try{
+      const value = JSON.stringify({ name: item.name, qty: item.qty });
+      const result = await withRetry(() => window.storage.set(META_PREFIX + item.id, value, false));
+      if(!result){
+        console.error('No se pudieron guardar los datos del item.');
+      }
+    }catch(err){
+      console.error('Error al guardar los datos del item:', err);
+    }
+  }
+
+  async function persistImage(item){
+    try{
+      const result = await withRetry(() => window.storage.set(IMAGE_PREFIX + item.id, item.image, false));
+      if(!result){
+        console.error('No se pudo guardar la foto del item.');
+      }
+    }catch(err){
+      console.error('Error al guardar la foto del item:', err);
+    }
+  }
+
+  async function removeStoredItem(id){
+    try{
+      await withRetry(() => window.storage.delete(META_PREFIX + id, false));
+    }catch(err){
+      console.error('Error al eliminar los datos del item:', err);
+    }
+    try{
+      await withRetry(() => window.storage.delete(IMAGE_PREFIX + id, false));
+    }catch(err){
+      // puede no tener foto guardada, no es un error real
+    }
+  }
+
+  function generateId(){
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  // ---------- helpers ----------
+  function fileToDataURL(file){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // reduce el tamaño de las fotos de muebles para no llenar el almacenamiento
+  function compressImage(dataUrl, maxSize){
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if(width > maxSize || height > maxSize){
+          const scale = maxSize / Math.max(width, height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  }
+
+  // ---------- render ----------
+  function render(){
+    grid.innerHTML = '';
+    emptyState.style.display = state.items.length ? 'none' : 'block';
+
+    state.items.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'tag-card';
+      card.dataset.id = item.id;
+
+      card.innerHTML = `
+        <div class="tag-inner">
+          <div class="tag-face tag-front">
+            <div class="tag-hole"></div>
+            ${item.image ? `<img src="${item.image}" alt="${escapeHtml(item.name)}">` : `<div class="no-img">Sin foto</div>`}
+            <div class="tag-label">${escapeHtml(item.name)}</div>
+          </div>
+          <div class="tag-face tag-back">
+            <div class="tag-hole"></div>
+            <div class="qty-name">${escapeHtml(item.name)}</div>
+            <div class="qty-display">${item.qty}</div>
+            <div class="qty-controls">
+              <button class="qty-btn minus" type="button">–</button>
+              <input class="qty-input" type="number" min="0" value="${item.qty}">
+              <button class="qty-btn plus" type="button">+</button>
+            </div>
+            <button class="delete-btn" type="button">Eliminar</button>
+          </div>
+        </div>
+      `;
+
+      const inner = card.querySelector('.tag-inner');
+      inner.addEventListener('click', () => card.classList.toggle('flipped'));
+
+      const stop = (el) => el.addEventListener('click', e => e.stopPropagation());
+
+      const minus = card.querySelector('.minus');
+      const plus = card.querySelector('.plus');
+      const qtyInput = card.querySelector('.qty-input');
+      const delBtn = card.querySelector('.delete-btn');
+
+      [minus, plus, qtyInput, delBtn].forEach(stop);
+
+      minus.addEventListener('click', () => updateQty(item.id, Math.max(0, item.qty - 1)));
+      plus.addEventListener('click', () => updateQty(item.id, item.qty + 1));
+      qtyInput.addEventListener('change', () => {
+        const val = Math.max(0, parseInt(qtyInput.value, 10) || 0);
+        updateQty(item.id, val);
+      });
+
+      delBtn.addEventListener('click', () => {
+        if(delBtn.classList.contains('armed')){
+          deleteItem(item.id);
+        }else{
+          delBtn.classList.add('armed');
+          delBtn.textContent = '¿Confirmar?';
+          setTimeout(() => {
+            delBtn.classList.remove('armed');
+            delBtn.textContent = 'Eliminar';
+          }, 2500);
+        }
+      });
+
+      grid.appendChild(card);
+    });
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  const metaSaveTimers = {};
+
+  function scheduleMetaSave(id){
+    const item = state.items.find(i => i.id === id);
+    if(!item) return;
+    if(metaSaveTimers[id]) clearTimeout(metaSaveTimers[id]);
+    metaSaveTimers[id] = setTimeout(() => {
+      delete metaSaveTimers[id];
+      persistMeta(item);
+    }, 700);
+  }
+
+  function updateQty(id, newQty){
+    const item = state.items.find(i => i.id === id);
+    if(!item) return;
+    item.qty = newQty;
+    const card = grid.querySelector(`.tag-card[data-id="${id}"]`);
+    if(card){
+      const display = card.querySelector('.qty-display');
+      const input = card.querySelector('.qty-input');
+      if(display) display.textContent = newQty;
+      if(input) input.value = newQty;
+    }
+    scheduleMetaSave(id);
+  }
+
+  function deleteItem(id){
+    if(metaSaveTimers[id]){
+      clearTimeout(metaSaveTimers[id]);
+      delete metaSaveTimers[id];
+    }
+    state.items = state.items.filter(i => i.id !== id);
+    render();
+    removeStoredItem(id);
+  }
+
+  // ---------- modal: agregar mueble ----------
+  const modalAdd = document.getElementById('modalAdd');
+  const inputImage = document.getElementById('inputImage');
+  const inputName = document.getElementById('inputName');
+  const inputQty = document.getElementById('inputQty');
+  const imgPreview = document.getElementById('imgPreview');
+
+  document.getElementById('btnAdd').addEventListener('click', () => {
+    pendingImage = null;
+    inputImage.value = '';
+    inputName.value = '';
+    inputQty.value = 1;
+    imgPreview.innerHTML = '';
+    modalAdd.classList.remove('hidden');
+  });
+
+  document.getElementById('cancelAdd').addEventListener('click', () => modalAdd.classList.add('hidden'));
+
+  inputImage.addEventListener('change', async () => {
+    const file = inputImage.files[0];
+    if(!file) return;
+    const raw = await fileToDataURL(file);
+    pendingImage = await compressImage(raw, 700);
+    imgPreview.innerHTML = `<img src="${pendingImage}" alt="Vista previa">`;
+  });
+
+  document.getElementById('confirmAdd').addEventListener('click', () => {
+    const name = inputName.value.trim();
+    const qty = Math.max(0, parseInt(inputQty.value, 10) || 0);
+    const newItem = {
+      id: generateId(),
+      name,
+      qty,
+      image: pendingImage
+    };
+    state.items.push(newItem);
+    modalAdd.classList.add('hidden');
+    render();
+    persistMeta(newItem);
+    if(newItem.image) persistImage(newItem);
+  });
+
+  // ---------- init ----------
+  loadState();
+})();
+</script>
+</body>
+</html>
